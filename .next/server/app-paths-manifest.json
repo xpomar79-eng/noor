@@ -1,0 +1,7 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/mushaf/page": "app/mushaf/page.js",
+  "/recitations/page": "app/recitations/page.js",
+  "/daily-azkar/page": "app/daily-azkar/page.js"
+}
