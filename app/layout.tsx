@@ -1,9 +1,27 @@
 ﻿"use client";
 
 import './globals.css';
+import Script from 'next/script';
 import { ThemeProvider, useTheme } from 'next-themes';
 import { Moon, Sun } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
+
+// Initialize theme script - runs synchronously before React hydration
+const themeScript = `
+(function() {
+  try {
+    const theme = localStorage.getItem('nour-theme');
+    const html = document.documentElement;
+    if (theme === 'light') {
+      html.classList.remove('dark');
+      html.style.colorScheme = 'light';
+    } else {
+      html.classList.add('dark');
+      html.style.colorScheme = 'dark';
+    }
+  } catch (e) {}
+})();
+`;
 
 const translations = {
   ar: {
@@ -99,9 +117,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const nav = navLinks[locale];
 
   return (
-    <html lang={locale === 'ar' ? 'ar' : 'en'} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <html lang={locale === 'ar' ? 'ar' : 'en'} dir={locale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body className="min-h-screen bg-surface text-slate-900 antialiased transition-colors duration-500 dark:bg-navy dark:text-slate-100">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="nour-theme" disableTransitionOnChange>
           <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-10">
             <header className="mb-8 flex flex-col gap-6 rounded-[2rem] border border-slate-200/60 bg-white/80 p-6 shadow-glow backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-950/75 lg:flex-row lg:items-center lg:justify-between lg:p-8">
               <div>

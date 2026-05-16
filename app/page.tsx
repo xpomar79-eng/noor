@@ -92,14 +92,18 @@ const dailyDhikrList = [
   { titleAr: 'اللهم يادائم الخير، اجعل أذكارنا زادًا لنا.', titleEn: 'O Allah, Sustainer of good, make our dhikr nourishment for us.', descriptionAr: 'استمر في ذكر الله واعش حياة روحية.', descriptionEn: 'Continue remembrance and live a spiritual life.' },
 ];
 
+const tasbeehPhrases = ['استغفر الله', 'سبحان الله', 'الله أكبر'];
+
 const reciterNames: Record<string, { nameAr: string; nameEn: string }> = {
   minshawi: { nameAr: 'الشيخ محمد صديق المنشاوي', nameEn: 'Sheikh Mohamed Siddiq Al-Minshawi' },
   abdulbasit: { nameAr: 'الشيخ عبدالباسط عبدالصمد', nameEn: 'Sheikh Abdul Basit Abdus Samad' },
+  ahmad_nu: { nameAr: 'الشيخ أحمد نعينع', nameEn: 'Ahmed Naina' },
+  yasser: { nameAr: 'الشيخ ياسر الدوسري', nameEn: 'Yasser Al-Dosari' },
 };
 
 const RECITATION_PROGRESS_KEY = 'nour-recitation-progress';
 const DAILY_DHIKR_KEY = 'nour-home-daily-dhikr';
-const FRIDAY_CHARITY_KEY = 'nour-friday-charity';
+const TASBEEH_PROGRESS_KEY = 'nour-tasbeeh-progress';
 
 const navCards = [
   {
@@ -208,7 +212,7 @@ export default function HomePage() {
   const [lastRecitation, setLastRecitation] = useState<{ surah: number; reciter: string } | null>(null);
   const [dailyAzkarProgress, setDailyAzkarProgress] = useState<Record<string, number>>({});
   const [dailyDhikr, setDailyDhikr] = useState<{ titleAr: string; titleEn: string; descriptionAr: string; descriptionEn: string } | null>(null);
-  const [fridayCharity, setFridayCharity] = useState<{ streak: number; lastDate: string }>({ streak: 0, lastDate: '' });
+  const [tasbeehTotalCount, setTasbeehTotalCount] = useState(0);
 
   useEffect(() => {
     const savedLocale = window.localStorage.getItem('nour-home-locale');
@@ -286,25 +290,14 @@ export default function HomePage() {
       window.localStorage.setItem(DAILY_DHIKR_KEY, JSON.stringify(nextDhikr));
     }
 
-    const savedFriday = window.localStorage.getItem(FRIDAY_CHARITY_KEY);
-    const fridayToday = new Date().getDay() === 5;
-    if (savedFriday) {
+    const savedTasbeeh = window.localStorage.getItem(TASBEEH_PROGRESS_KEY);
+    if (savedTasbeeh) {
       try {
-        const parsed = JSON.parse(savedFriday);
-        const nextState = { streak: parsed.streak ?? 0, lastDate: parsed.lastDate ?? '' };
-        if (fridayToday && nextState.lastDate !== todayDhikr) {
-          nextState.streak += 1;
-          nextState.lastDate = todayDhikr;
-          window.localStorage.setItem(FRIDAY_CHARITY_KEY, JSON.stringify(nextState));
-        }
-        setFridayCharity(nextState);
+        const parsed = JSON.parse(savedTasbeeh);
+        setTasbeehTotalCount(typeof parsed.totalCount === 'number' ? parsed.totalCount : 0);
       } catch {
-        setFridayCharity(fridayToday ? { streak: 1, lastDate: todayDhikr } : { streak: 0, lastDate: '' });
+        setTasbeehTotalCount(0);
       }
-    } else {
-      const nextState = fridayToday ? { streak: 1, lastDate: todayDhikr } : { streak: 0, lastDate: '' };
-      setFridayCharity(nextState);
-      window.localStorage.setItem(FRIDAY_CHARITY_KEY, JSON.stringify(nextState));
     }
   }, []);
 
@@ -447,6 +440,10 @@ export default function HomePage() {
 
   const timeToNextPrayer = Math.max(0, (nextPrayer.date ? nextPrayer.date.getTime() : 0) - now.getTime());
   const completedCount = Object.values(completedPrayers).filter(Boolean).length;
+  const tasbeehCycleCount = Math.floor(tasbeehTotalCount / 99) + 1;
+  const tasbeehIndex = tasbeehTotalCount % 99;
+  const currentTasbeehPhrase = tasbeehPhrases[Math.floor(tasbeehIndex / 33) % 3];
+  const tasbeehProgressPercent = Math.round((tasbeehIndex / 99) * 100);
   const allComplete = completedCount === Object.keys(defaultCheckins).length;
   const azkarItemsDone = Object.values(dailyAzkarProgress).filter((count) => count > 0).length;
   const azkarProgressPercent = Math.round((azkarItemsDone / 21) * 100);
@@ -474,6 +471,12 @@ export default function HomePage() {
     locale === 'ar' ? 'ar-SA-u-ca-islamic' : 'en-US-u-ca-islamic',
     { day: 'numeric', month: 'long', year: 'numeric' }
   ).format(now);
+
+  const handleTasbeehTap = () => {
+    const nextCount = tasbeehTotalCount + 1;
+    setTasbeehTotalCount(nextCount);
+    window.localStorage.setItem(TASBEEH_PROGRESS_KEY, JSON.stringify({ totalCount: nextCount }));
+  };
 
   const handleLocaleChange = (value: 'ar' | 'en') => {
     setLocale(value);
@@ -889,33 +892,56 @@ export default function HomePage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
-                  {locale === 'ar' ? 'صدقة الجمعة' : 'Friday Charity'}
+                  {locale === 'ar' ? 'عداد التسبيح' : 'Tasbeeh Counter'}
                 </p>
                 <h3 className="mt-3 text-xl font-semibold text-slate-950 dark:text-white">
-                  {locale === 'ar' ? 'سلسلة الجمعة الخاصة' : 'Friday giving streak'}
+                  {locale === 'ar' ? 'سلسلة الذكر' : 'Dhikr Sequence'}
                 </h3>
               </div>
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-gold/10 text-gold">
-                <CalendarDays className="h-5 w-5" />
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white">
+                <MoonStar className="h-5 w-5" />
               </div>
             </div>
-            <div className="mt-6 space-y-4 text-slate-700 dark:text-slate-300">
-              <p className="text-3xl font-semibold text-slate-950 dark:text-white">{fridayCharity.streak}</p>
-              <p className="text-sm leading-6">
-                {locale === 'ar'
-                  ? fridayCharity.streak > 0
-                    ? 'عدد مرات الصدقة في يوم الجمعة المتتالية.'
-                    : 'ابدأ مسار صدقة الجمعة اليوم.'
-                  : fridayCharity.streak > 0
-                  ? 'Consecutive Friday charity count.'
-                  : 'Begin your Friday charity streak today.'}
-              </p>
-              <Link
-                href="/friday-charity"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            <div className="mt-6 space-y-5 text-slate-700 dark:text-slate-300">
+              <div className="rounded-[2rem] border border-slate-200/70 bg-slate-50 p-5 dark:border-slate-700/70 dark:bg-slate-900/80">
+                <p className="text-sm uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
+                  {locale === 'ar' ? 'الذكر الحالي' : 'Current Dhikr'}
+                </p>
+                <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">{currentTasbeehPhrase}</p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/90 p-4 dark:border-slate-700/70 dark:bg-slate-950/85">
+                  <p className="text-sm uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
+                    {locale === 'ar' ? 'دورة التسبيح' : 'Cycle'}
+                  </p>
+                  <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{tasbeehCycleCount}</p>
+                </div>
+                <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/90 p-4 dark:border-slate-700/70 dark:bg-slate-950/85">
+                  <p className="text-sm uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
+                    {locale === 'ar' ? 'عدد التسبيحات' : 'Total count'}
+                  </p>
+                  <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{tasbeehTotalCount}</p>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                  <span>{locale === 'ar' ? 'تقدم الدورة' : 'Cycle progress'}</span>
+                  <span className="font-semibold text-slate-950 dark:text-white">{tasbeehProgressPercent}%</span>
+                </div>
+                <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-gold via-slate-900 to-slate-950 dark:from-gold dark:via-white" style={{ width: `${tasbeehProgressPercent}%` }} />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTasbeehTap}
+                className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
               >
-                {locale === 'ar' ? 'اذهب إلى صفحة الجمعة' : 'Go to Friday Charity'}
-              </Link>
+                {locale === 'ar' ? 'اضغط للتسبيح' : 'Tap to Tasbeeh'}
+              </button>
             </div>
           </article>
           <article className="rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5 dark:border-slate-700/80 dark:bg-slate-950/80">
@@ -1018,6 +1044,19 @@ export default function HomePage() {
               </div>
             </Link>
           ))}
+        </section>
+        <section id="about" className="mt-12">
+          <div className="rounded-[2rem] border border-white/80 bg-white/85 p-8 shadow-xl backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-950/85">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
+                {locale === 'ar' ? (
+                  `برمجة عمر هشام\nصدقة جارية له ولوالديه ولجميع المسلمين إن شاء الله.\n\nنسأل الله أن ينفع بهذا العمل ويجعله في ميزان الحسنات.`
+                ) : (
+                  `Developed by Omar Hisham\nA continuing charity for him, his parents, and all Muslims, insha’Allah.\n\nMay Allah make this work beneficial and place it in the scale of good deeds.`
+                )}
+              </p>
+            </div>
+          </div>
         </section>
       </div>
     </main>

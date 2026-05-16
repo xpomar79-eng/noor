@@ -160,6 +160,18 @@ export default function RecitationsPage() {
       nameEn: "Sheikh Abdul Basit Abdus Samad",
       source: 'https://download.quranicaudio.com/quran/abdul_basit_murattal',
     },
+    {
+      id: 'ahmad_nu',
+      nameAr: 'الشيخ أحمد نعينع',
+      nameEn: 'Ahmed Naina',
+      source: 'https://server11.mp3quran.net/ahmad_nu',
+    },
+    {
+      id: 'yasser',
+      nameAr: 'الشيخ ياسر الدوسري',
+      nameEn: 'Yasser Al-Dosari',
+      source: 'https://server11.mp3quran.net/yasser',
+    },
   ];
 
   const STORAGE_KEY = 'nour-reciter';
@@ -442,7 +454,7 @@ const RECITATION_PROGRESS_KEY = 'nour-recitation-progress';
             </div>
 
             <p className="text-slate-600 dark:text-slate-400">
-              اختر قارئك بين المنشاوي وعبدالباسط ثم استمتع بتجربة صوتية فاخرة تحفظ اختيارك تلقائياً للزيارة القادمة.
+              اختر قارئك بين المنشاوي وعبدالباسط وأحمد نعينع ثم استمتع بتجربة صوتية فاخرة تحفظ اختيارك تلقائياً للزيارة القادمة.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">

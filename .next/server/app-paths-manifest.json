@@ -1,0 +1,9 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/daily-azkar/page": "app/daily-azkar/page.js",
+  "/mushaf/page": "app/mushaf/page.js",
+  "/page": "app/page.js",
+  "/recitations/al-minshawi/page": "app/recitations/al-minshawi/page.js",
+  "/recitations/page": "app/recitations/page.js"
+}
